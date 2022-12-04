@@ -869,3 +869,81 @@ objects:
           Private services access must already be configured for the network. If left unspecified, the index endpoint is not peered with any network.
           [Format](https://cloud.google.com/compute/docs/reference/rest/v1/networks/insert): `projects/{project}/global/networks/{network}`.
           Where `{project}` is a project number, as in `12345`, and `{network}` is network name.
+# Vertex AI Matching Engine Deployed Index
+  - !ruby/object:Api::Resource
+    name: DeployedIndex
+    base_url: '{{index_endpoint}}'
+    create_url: '{{index_endpoint}}:deployIndex'
+    update_url: '{{index_endpoint}}:mutateDeployedIndex'
+    delete_url: '{{index_endpoint}}:undeployIndex'
+    create_verb: POST
+    update_verb: POST
+    delete_verb: POST
+    async: !ruby/object:Api::OpAsync
+      operation: !ruby/object:Api::OpAsync::Operation
+        path: 'name'
+        base_url: '{{op_id}}'
+        wait_ms: 1000
+      result: !ruby/object:Api::OpAsync::Result
+        path: 'response'
+        resource_inside_response: true
+      status: !ruby/object:Api::OpAsync::Status
+        path: 'done'
+        complete: True
+        allowed:
+          - True
+          - False
+    description: |-
+      An index deployed into an index endpoint. An index endpoint can have multiple deployed indexes.
+    parameters:
+      - !ruby/object:Api::Type::String
+        name: region
+        description: The region of the index endpoint. eg us-central1
+        url_param_only: true
+        input: true
+    properties:
+      - !ruby/object:Api::Type::String
+        name: 'id'
+        description: The user specified ID of the DeployedIndex. The ID can be up to 128 characters long and must start with a letter and only contain letters, numbers, and underscores. The ID must be unique within the project it is created in.
+          - !ruby/object:Api::Type::Integer
+            name: minReplicaCount
+            description: Immutable. The minimum number of replicas this DeployedModel will be always deployed on. If traffic against it increases, it may dynamically be deployed onto more replicas up to maxReplicaCount, and as traffic decreases, some of these extra replicas may be freed. If the requested value is too large, the deployment will error.
+            input: true
+          - !ruby/object:Api::Type::Integer
+            name: maxReplicaCount
+            descrition: Immutable. The maximum number of replicas this DeployedMoindex endpointloyed on when the traffic against it increases. If the requested value is too large, the deployment will error, but if deployment succeeds then the ability to scale the model to that many replicas is guaranteed (barring service outages). If traffic against the DeployedModel increases beyond what its replicas at maximum may handle, a portion of the traffic will be dropped. If this value is not provided, a no upper bound for scaling under heavy traffic will be assume, though Vertex AI may be unable to scale beyond certain replica  number.
+          - !ruby/object:Api::Type::Integer
+      # TODO(shotarok) To implement this resource
+      # - !ruby/object:Api::Type::NestedObject
+      #   name: dedicatedResources
+      #   optional: true
+      #   description: A description of resources that the DeployedIndex uses, which to large degree are decided by Vertex AI, and optionally allows only a modest additional configuration. If minReplicaCount is not set, the default value is 2 (we don't provide SLA when minReplicaCount=1). If maxReplicaCount is not set, the default value is minReplicaCount. The max allowed replica count is 1000.
+      #   properties:
+      - !ruby/object:Api::Type::Boolean
+        name: 'enableAccessLogging'
+        optional: true
+        description: |-
+          If true, private endpoint's access logs are sent to StackDriver Logging.
+          These logs are like standard server access logs, containing information like timestamp and latency for each MatchRequest.
+          Note that Stackdriver logs may incur a cost, especially if the deployed index receives a high queries per second rate (QPS). Estimate your costs before enabling this option.
+
+      # TODO(shotarok) To implement this resource
+      # - !ruby/object:Api::Type::NestedObject
+      #   name: dedicatedResources
+      #   description: A description of resources that the DeployedIndex uses, which to large degree are decided by Vertex AI, and optionally allows only a modest additional configuration. If minReplicaCount is not set, the default value is 2 (we don't provide SLA when minReplicaCount=1). If maxReplicaCount is not set, the default value is minReplicaCount. The max allowed replica count is 1000.
+      #   properties:
+
+      - !ruby/object:Api::Type::Array
+        name: reservedIpRanges
+        description: |-
+          A list of reserved ip ranges under the VPC network that can be used for this DeployedIndex.
+          If set, we will deploy the index within the provided ip ranges. Otherwise, the index might be deployed to any ip ranges under the provided VPC network.
+          The value sohuld be the name of the address (https://cloud.google.com/compute/docs/reference/rest/v1/addresses) Example: 'vertex-ai-ip-range'.
+        optional: true
+        item_type: !ruby/object:Api::Type::String
+      - !ruby/object:Api::Type::String
+        name: 'deploymentGroup'
+        description: |-
+          The deployment group can be no longer than 64 characters (eg: 'test', 'prod'). If not set, we will use the 'default' deployment group.
+          Creating deployment_groups with reservedIpRanges is a recommended practice when the peered network has multiple peering ranges. This creates your deployments from predictable IP spaces for easier traffic administration. Also, one deploymentGroup (except 'default') can only be used with the same reservedIpRanges which means if the deploymentGroup has been used with reservedIpRanges: [a, b, c], using it with [a, b] or [d, e] is disallowed.
+          Note: we only support up to 5 deployment groups(not including 'default').
