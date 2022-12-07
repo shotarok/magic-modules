@@ -879,6 +879,8 @@ objects:
     create_verb: POST
     update_verb: POST
     delete_verb: POST
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      api: https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.index/
     async: !ruby/object:Api::OpAsync
       operation: !ruby/object:Api::OpAsync::Operation
         path: 'name'
@@ -901,45 +903,109 @@ objects:
         description: The region of the index endpoint. eg us-central1
         url_param_only: true
         input: true
+      - !ruby/object:Api::Type::String
+        name: index_endpoint
+        description: "The name of the IndexEndpoint resource into which to deploy an Index. Format: projects/{project}/locations/{location}/indexEndpoints/{indexEndpoint}"
+        url_param_only: true
+        input: true
     properties:
       - !ruby/object:Api::Type::String
         name: 'id'
         description: The user specified ID of the DeployedIndex. The ID can be up to 128 characters long and must start with a letter and only contain letters, numbers, and underscores. The ID must be unique within the project it is created in.
+        required: true
+      - !ruby/object:Api::Type::String
+        name: index
+        description: The name of the Index this is the deployment of. We may refer to this Index as the DeployedIndex's "original" Index.
+        required: true
+      - !ruby/object:Api::Type::String
+        name: displayName
+        descrition: The display name of the DeployedIndex. If not provided upon creation, the Index's displayName is used.
+      - !ruby/object:Api::Type::Integer
+      # TODO(shotarok) Confirm if it's the same as the endpoint
+      - !ruby/object:Api::Type::NestedObject
+        name: automaticResources
+        description: A description of resources that to large degree are decided by Vertex AI, and require only a modest additional configuration.
+        properties:
           - !ruby/object:Api::Type::Integer
             name: minReplicaCount
-            description: Immutable. The minimum number of replicas this DeployedModel will be always deployed on. If traffic against it increases, it may dynamically be deployed onto more replicas up to maxReplicaCount, and as traffic decreases, some of these extra replicas may be freed. If the requested value is too large, the deployment will error.
+            description: The minimum number of replicas this DeployedModel will be always deployed on. If traffic against it increases, it may dynamically be deployed onto more replicas up to max_replica_count, and as traffic decreases, some of these extra replicas may be freed. If the requested value is too large, the deployment will error.
             input: true
           - !ruby/object:Api::Type::Integer
             name: maxReplicaCount
-            descrition: Immutable. The maximum number of replicas this DeployedMoindex endpointloyed on when the traffic against it increases. If the requested value is too large, the deployment will error, but if deployment succeeds then the ability to scale the model to that many replicas is guaranteed (barring service outages). If traffic against the DeployedModel increases beyond what its replicas at maximum may handle, a portion of the traffic will be dropped. If this value is not provided, a no upper bound for scaling under heavy traffic will be assume, though Vertex AI may be unable to scale beyond certain replica  number.
+            description: The maximum number of replicas this DeployedModel may be deployed on when the traffic against it increases. If the requested value is too large, the deployment will error, but if deployment succeeds then the ability to scale the model to that many replicas is guaranteed (barring service outages). If traffic against the DeployedModel increases beyond what its replicas at maximum may handle, a portion of the traffic will be dropped. If this value is not provided, a no upper bound for scaling under heavy traffic will be assume, though Vertex AI may be unable to scale beyond certain replica number.
+            input: true
+      # TODO(shotarok) Confirm if the nested object is the same as the endpoint
+      - !ruby/object:Api::Type::NestedObject
+        name: dedicatedResources
+        description: A description of resources that are dedicated to the DeployedModel, and that need a higher degree of manual configuration.
+        properties:
+          - !ruby/object:Api::Type::NestedObject
+            name: machineSpec
+            description: The specification of a single machine used by the prediction.
+            required: true
+            input: true
+            properties:
+              - !ruby/object:Api::Type::String
+                name: machineType
+                description: 'The type of the machine. See the [list of machine types supported for prediction](https://cloud.google.com/vertex-ai/docs/predictions/configure-compute#machine-types) See the [list of machine types supported for custom training](https://cloud.google.com/vertex-ai/docs/training/configure-compute#machine-types). For DeployedModel this field is optional, and the default value is `n1-standard-2`. For BatchPredictionJob or as part of WorkerPoolSpec this field is required. TODO(rsurowka): Try to better unify the required vs optional.'
+              - !ruby/object:Api::Type::String
+                name: acceleratorType
+                description: The type of accelerator(s) that may be attached to the machine as per accelerator_count. See possible values [here](https://cloud.google.com/vertex-ai/docs/reference/rest/v1/MachineSpec#AcceleratorType).
+              - !ruby/object:Api::Type::Integer
+                name: acceleratorCount
+                description: The number of accelerators to attach to the machine.
           - !ruby/object:Api::Type::Integer
-      # TODO(shotarok) To implement this resource
-      # - !ruby/object:Api::Type::NestedObject
-      #   name: dedicatedResources
-      #   optional: true
-      #   description: A description of resources that the DeployedIndex uses, which to large degree are decided by Vertex AI, and optionally allows only a modest additional configuration. If minReplicaCount is not set, the default value is 2 (we don't provide SLA when minReplicaCount=1). If maxReplicaCount is not set, the default value is minReplicaCount. The max allowed replica count is 1000.
-      #   properties:
+            name: minReplicaCount
+            description: The minimum number of machine replicas this DeployedModel will be always deployed on. This value must be greater than or equal to 1. If traffic against the DeployedModel increases, it may dynamically be deployed onto more replicas, and as traffic decreases, some of these extra replicas may be freed.
+            required: true
+            input: true
+          - !ruby/object:Api::Type::Integer
+            name: maxReplicaCount
+            input: true
+            description: The maximum number of replicas this DeployedModel may be deployed on when the traffic against it increases. If the requested value is too large, the deployment will error, but if deployment succeeds then the ability to scale the model to that many replicas is guaranteed (barring service outages). If traffic against the DeployedModel increases beyond what its replicas at maximum may handle, a portion of the traffic will be dropped. If this value is not provided, will use min_replica_count as the default value. The value of this field impacts the charge against Vertex CPU and GPU quotas. Specifically, you will be charged for max_replica_count * number of cores in the selected machine type) and (max_replica_count * number of GPUs per replica in the selected machine type).
+          - !ruby/object:Api::Type::Array
+            name: autoscalingMetricSpecs
+            description: The metric specifications that overrides a resource utilization metric (CPU utilization, accelerator's duty cycle, and so on) target value (default to 60 if not set). At most one entry is allowed per metric. If machine_spec.accelerator_count is above 0, the autoscaling will be based on both CPU utilization and accelerator's duty cycle metrics and scale up when either metrics exceeds its target value while scale down if both metrics are under their target value. The default target value is 60 for both metrics. If machine_spec.accelerator_count is 0, the autoscaling will be based on CPU utilization metric only with default target value 60 if not explicitly set. For example, in the case of Online Prediction, if you want to override target CPU utilization to 80, you should set autoscaling_metric_specs.metric_name to `aiplatform.googleapis.com/prediction/online/cpu/utilization` and autoscaling_metric_specs.target to `80`.
+            input: true
+            item_type: !ruby/object:Api::Type::NestedObject
+              name: autoscalingMetricSpecs
+              description: The metric specifications that overrides a resource utilization metric (CPU utilization, accelerator's duty cycle, and so on) target value (default to 60 if not set). At most one entry is allowed per metric. If machine_spec.accelerator_count is above 0, the autoscaling will be based on both CPU utilization and accelerator's duty cycle metrics and scale up when either metrics exceeds its target value while scale down if both metrics are under their target value. The default target value is 60 for both metrics. If machine_spec.accelerator_count is 0, the autoscaling will be based on CPU utilization metric only with default target value 60 if not explicitly set. For example, in the case of Online Prediction, if you want to override target CPU utilization to 80, you should set autoscaling_metric_specs.metric_name to `aiplatform.googleapis.com/prediction/online/cpu/utilization` and autoscaling_metric_specs.target to `80`.
+              properties:
+                  - !ruby/object:Api::Type::String
+                    name: metricName
+                    description: 'The resource metric name. Supported metrics: * For Online Prediction: * `aiplatform.googleapis.com/prediction/online/accelerator/duty_cycle` * `aiplatform.googleapis.com/prediction/online/cpu/utilization`'
+                    required: true
+                  - !ruby/object:Api::Type::Integer
+                    name: target
+                    description: The target resource utilization in percentage (1% - 100%) for the given metric; once the real usage deviates from the target by a certain percentage, the machine replicas change. The default value is 60 (representing 60%) if not provided.
       - !ruby/object:Api::Type::Boolean
         name: 'enableAccessLogging'
-        optional: true
         description: |-
           If true, private endpoint's access logs are sent to StackDriver Logging.
           These logs are like standard server access logs, containing information like timestamp and latency for each MatchRequest.
           Note that Stackdriver logs may incur a cost, especially if the deployed index receives a high queries per second rate (QPS). Estimate your costs before enabling this option.
-
-      # TODO(shotarok) To implement this resource
-      # - !ruby/object:Api::Type::NestedObject
-      #   name: dedicatedResources
-      #   description: A description of resources that the DeployedIndex uses, which to large degree are decided by Vertex AI, and optionally allows only a modest additional configuration. If minReplicaCount is not set, the default value is 2 (we don't provide SLA when minReplicaCount=1). If maxReplicaCount is not set, the default value is minReplicaCount. The max allowed replica count is 1000.
-      #   properties:
-
+      - !ruby/object:Api::Type::NestedObject
+        name: deployedIndexAuthConfig
+        description: Optional. If set, the authentication is enabled for the private endpoint.
+        properties:
+          - !ruby/object:Api::Type::NestedObject
+            name: authProvider
+            description: Defines the authentication provider that the DeployedIndex uses.
+            properties:
+              - !ruby/object:Api::Type::Array
+                name: audiences
+                description: The list of JWT audiences. that are allowed to access. A JWT containing any of these audiences will be accepted.
+                item_type: !ruby/object:Api::Type::String
+              - !ruby/object:Api::Type::Array
+                name: allowedIssuers
+                description: "A list of allowed JWT issuers. Each entry must be a valid Google service account, in the following format: service-account-name@project-id.iam.gserviceaccount.com"
+                item_type: !ruby/object:Api::Type::String
       - !ruby/object:Api::Type::Array
         name: reservedIpRanges
         description: |-
           A list of reserved ip ranges under the VPC network that can be used for this DeployedIndex.
           If set, we will deploy the index within the provided ip ranges. Otherwise, the index might be deployed to any ip ranges under the provided VPC network.
           The value sohuld be the name of the address (https://cloud.google.com/compute/docs/reference/rest/v1/addresses) Example: 'vertex-ai-ip-range'.
-        optional: true
         item_type: !ruby/object:Api::Type::String
       - !ruby/object:Api::Type::String
         name: 'deploymentGroup'
