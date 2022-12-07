@@ -1074,9 +1074,9 @@ objects:
     create_url: '{{index_endpoint}}:deployIndex'
     update_url: '{{index_endpoint}}:mutateDeployedIndex'
     delete_url: '{{index_endpoint}}:undeployIndex'
-    create_verb: POST
-    update_verb: POST
-    delete_verb: POST
+    create_verb: :POST
+    update_verb: :POST
+    delete_verb: :POST
     references: !ruby/object:Api::Resource::ReferenceLinks
       api: https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.index/
     async: !ruby/object:Api::OpAsync
@@ -1093,6 +1093,9 @@ objects:
         allowed:
           - True
           - False
+      error: !ruby/object:Api::OpAsync::Error
+        path: 'error'
+        message: 'message'
     description: |-
       An index deployed into an index endpoint. An index endpoint can have multiple deployed indexes.
     parameters:
@@ -1117,8 +1120,7 @@ objects:
         required: true
       - !ruby/object:Api::Type::String
         name: displayName
-        descrition: The display name of the DeployedIndex. If not provided upon creation, the Index's displayName is used.
-      - !ruby/object:Api::Type::Integer
+        description: The display name of the DeployedIndex. If not provided upon creation, the Index's displayName is used.
       # TODO(shotarok) Confirm if it's the same as the endpoint
       - !ruby/object:Api::Type::NestedObject
         name: automaticResources
@@ -1193,18 +1195,18 @@ objects:
               - !ruby/object:Api::Type::Array
                 name: audiences
                 description: The list of JWT audiences. that are allowed to access. A JWT containing any of these audiences will be accepted.
-                item_type: !ruby/object:Api::Type::String
+                item_type: Api::Type::String
               - !ruby/object:Api::Type::Array
                 name: allowedIssuers
                 description: "A list of allowed JWT issuers. Each entry must be a valid Google service account, in the following format: service-account-name@project-id.iam.gserviceaccount.com"
-                item_type: !ruby/object:Api::Type::String
+                item_type: Api::Type::String
       - !ruby/object:Api::Type::Array
         name: reservedIpRanges
         description: |-
           A list of reserved ip ranges under the VPC network that can be used for this DeployedIndex.
           If set, we will deploy the index within the provided ip ranges. Otherwise, the index might be deployed to any ip ranges under the provided VPC network.
           The value sohuld be the name of the address (https://cloud.google.com/compute/docs/reference/rest/v1/addresses) Example: 'vertex-ai-ip-range'.
-        item_type: !ruby/object:Api::Type::String
+        item_type: Api::Type::String
       - !ruby/object:Api::Type::String
         name: 'deploymentGroup'
         description: |-
