@@ -1,0 +1,20 @@
+indexId, ok := d.GetOkExists("id")
+if !ok {
+    return nil, fmt.Errorf("id doesn't exist")
+}
+
+// See the following links
+// * https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexEndpoints/get
+// * https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexEndpoints#IndexEndpoint
+deployedIndexes, ok := res["deployedIndexes"].([]map[string]interface{})
+if !ok {
+    return nil, fmt.Errorf("deployedIndexes in the response can't be converted to []map[string]interface{}")
+}
+
+for _, idx := range deployedIndexes {
+    if idx["id"].(string) == indexId.(string) {
+        return idx, nil
+    }
+}
+
+return nil, fmt.Errorf("Error to find the index id:%s", indexId)

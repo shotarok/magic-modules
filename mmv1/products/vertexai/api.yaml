@@ -1071,6 +1071,7 @@ objects:
   - !ruby/object:Api::Resource
     name: DeployedIndex
     base_url: '{{index_endpoint}}'
+    self_link: '{{index_endpoint}}'
     create_url: '{{index_endpoint}}:deployIndex'
     update_url: '{{index_endpoint}}:mutateDeployedIndex'
     delete_url: '{{index_endpoint}}:undeployIndex'
@@ -1078,7 +1079,7 @@ objects:
     update_verb: :POST
     delete_verb: :POST
     references: !ruby/object:Api::Resource::ReferenceLinks
-      api: https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.index/
+        api: https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.index/
     async: !ruby/object:Api::OpAsync
       operation: !ruby/object:Api::OpAsync::Operation
         path: 'name'
@@ -1111,6 +1112,7 @@ objects:
         input: true
     properties:
       - !ruby/object:Api::Type::String
+        # TODO(shotarok) Should I use id' or 'name'
         name: 'id'
         description: The user specified ID of the DeployedIndex. The ID can be up to 128 characters long and must start with a letter and only contain letters, numbers, and underscores. The ID must be unique within the project it is created in.
         required: true

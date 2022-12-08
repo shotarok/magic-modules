@@ -1,0 +1,8 @@
+// See https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexEndpoints/undeployIndex
+indexId, ok := d.GetOkExists("id")
+if !ok {
+    return fmt.Error("id doesn't exist")
+}
+payloadToDelete := make(map[string]interface{})
+payloadToDelete["deployedIndexId"] = indexId
+obj = payloadToDelete
