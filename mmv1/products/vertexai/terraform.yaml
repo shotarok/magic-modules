@@ -253,8 +253,10 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         ignore_read: true
   DeployedIndex: !ruby/object:Overrides::Terraform::ResourceOverride
     autogen_async: false
-    id_format: '{{index_endpoint}}/deployedIndex/{{name}}'
-    import_format: ["{{%index_endpoint}}/deployedIndex/{{name}}"]
+    # DeployedIndex.id must be unique within the project it is created in.
+    # See https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexEndpoints#DeployedIndex
+    id_format: 'projects/{{project}}/locations/{{region}}/deployedIndexes/{{name}}'
+    import_format: ["projects/{{project}}/locations/{{region}}/deployedIndexes/{{name}}"]
     # examples:
     #   - !ruby/object:Provider::Terraform::Examples
     #     name: "vertex_ai_deployed_index"
