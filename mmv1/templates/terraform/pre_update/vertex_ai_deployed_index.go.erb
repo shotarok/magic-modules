@@ -1,3 +1,7 @@
+// Replace the key name: "name" with "id" for the payload of mutateDeployedIndex
+obj["id"] = obj["name"]
+delete(obj, "name")
+
 // Extract project from index_endpoint
 if v, ok := d.GetOk("index_endpoint"); ok {
 	re := regexp.MustCompile("projects/([a-zA-Z0-9-]*)/(?:locations|regions)/([a-zA-Z0-9-]*)")
@@ -8,12 +12,3 @@ if v, ok := d.GetOk("index_endpoint"); ok {
 		}
 	}
 }
-
-// See https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexEndpoints/undeployIndex
-indexId, ok := d.GetOkExists("id")
-if !ok {
-    return fmt.Errorf("id doesn't exist")
-}
-payloadToDelete := make(map[string]interface{})
-payloadToDelete["deployedIndexId"] = indexId.(string)
-obj = payloadToDelete

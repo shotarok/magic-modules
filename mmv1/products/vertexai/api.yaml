@@ -1097,6 +1097,7 @@ objects:
       error: !ruby/object:Api::OpAsync::Error
         path: 'error'
         message: 'message'
+      include_project: true
     description: |-
       An index deployed into an index endpoint. An index endpoint can have multiple deployed indexes.
     parameters:
@@ -1112,8 +1113,8 @@ objects:
         input: true
     properties:
       - !ruby/object:Api::Type::String
-        # TODO(shotarok) Should I use id' or 'name'
-        name: 'id'
+        # 'id' can't be used because it'll be conflicted with id of the terraform state.
+        name: 'name'
         description: The user specified ID of the DeployedIndex. The ID can be up to 128 characters long and must start with a letter and only contain letters, numbers, and underscores. The ID must be unique within the project it is created in.
         required: true
       - !ruby/object:Api::Type::String

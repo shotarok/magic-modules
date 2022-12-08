@@ -1,6 +1,6 @@
-indexId, ok := d.GetOkExists("id")
+indexId, ok := d.GetOkExists("name")
 if !ok {
-    return nil, fmt.Errorf("id doesn't exist")
+    return nil, fmt.Errorf("name doesn't exist")
 }
 
 // See the following links
@@ -13,6 +13,11 @@ if !ok {
 
 for _, idx := range deployedIndexes {
     if idx["id"].(string) == indexId.(string) {
+
+        // Replace the key: "id" with "name"
+        idx["name"] = idx["id"]
+        delete(idx, "id")
+
         return idx, nil
     }
 }

@@ -1,4 +1,18 @@
+// Extract project from index_endpoint
+if v, ok := d.GetOk("index_endpoint"); ok {
+	re := regexp.MustCompile("projects/([a-zA-Z0-9-]*)/(?:locations|regions)/([a-zA-Z0-9-]*)")
+	switch {
+	case re.MatchString(v.(string)):
+		if res := re.FindStringSubmatch(v.(string)); len(res) == 3 && res[1] != "" {
+			project = res[1]
+		}
+	}
+}
+
+// Add the key "deployedIndex" and replace the key name: "name" with "id" for the payload of deployIndex
 // See https://cloud.google.com/vertex-ai/docs/reference/rest/v1/projects.locations.indexEndpoints/deployIndex
+obj["id"] = obj["name"]
+delete(obj, "name")
 payloadToCreate := make(map[string]interface{})
 payloadToCreate["deployedIndex"] = obj
 obj = payloadToCreate
